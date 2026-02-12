@@ -1,0 +1,11 @@
+.claude
+.git
+.gitignore
+docs
+k8s
+LICENSE
+Makefile
+README.md
+scripts
+skaffold.env
+skaffold.yaml

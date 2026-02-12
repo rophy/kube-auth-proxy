@@ -1,0 +1,52 @@
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: kube-auth-proxy
+
+profiles:
+- name: default
+  build:
+    tagPolicy:
+      gitCommit:
+        variant: Tags
+    local:
+      push: false
+      useBuildkit: true
+    artifacts:
+    - image: kube-auth-proxy
+      docker:
+        dockerfile: Dockerfile
+        buildArgs:
+          VERSION: "{{.IMAGE_TAG}}"
+  deploy:
+    kubeContext: kind-cluster-a
+    helm:
+      releases:
+      - name: kube-auth-proxy
+        createNamespace: true
+        namespace: kube-federated-auth
+        chartPath: k8s/kube-auth-proxy
+- name: incluster
+  build:
+    tagPolicy:
+      gitCommit:
+        variant: Tags
+    local:
+      push: false
+      useBuildkit: true
+    artifacts:
+    - image: kube-auth-proxy
+      docker:
+        dockerfile: Dockerfile
+        buildArgs:
+          VERSION: "{{.IMAGE_TAG}}"
+  deploy:
+    kubeContext: kind-cluster-a
+    helm:
+      releases:
+      - name: kube-auth-proxy-incluster
+        createNamespace: true
+        namespace: kube-federated-auth
+        chartPath: k8s/kube-auth-proxy
+        setValues:
+          tokenReviewURL: ""
