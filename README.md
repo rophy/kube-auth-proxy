@@ -48,7 +48,18 @@ When running inside a Kubernetes cluster without `--token-review-url`, kube-auth
 kube-auth-proxy --upstream=http://localhost:8080
 ```
 
-The ServiceAccount must have `system:auth-delegator` ClusterRoleBinding.
+The ServiceAccount needs permission to create `tokenreviews`:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: token-reviewer
+rules:
+- apiGroups: ["authentication.k8s.io"]
+  resources: ["tokenreviews"]
+  verbs: ["create"]
+```
 
 ## Docker
 
