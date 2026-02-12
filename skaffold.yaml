@@ -17,12 +17,10 @@ build:
       buildArgs:
         VERSION: "{{.IMAGE_TAG}}"
 
-profiles:
-- name: e2e
-  manifests:
-    rawYaml:
-    - test/e2e/manifests/*.yaml
-  deploy:
-    kubeContext: kind-cluster-a
-    kubectl:
-      defaultNamespace: kube-auth-proxy-e2e
+manifests:
+  rawYaml:
+  - test/e2e/manifests/*.yaml
+
+deploy:
+  kubectl:
+    defaultNamespace: kube-auth-proxy

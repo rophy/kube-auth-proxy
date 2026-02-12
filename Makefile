@@ -1,4 +1,4 @@
-.PHONY: build image test clean e2e-setup e2e e2e-teardown help
+.PHONY: build image test e2e-setup e2e e2e-teardown help
 
 .DEFAULT_GOAL := help
 
@@ -10,9 +10,6 @@ build: ## Build Docker image (local dev)
 image: ## Build release image
 	./scripts/build-image.sh
 
-clean: ## Clean local build artifacts
-	rm -rf bin/
-
 ## Test
 
 test: ## Run unit tests
@@ -21,13 +18,13 @@ test: ## Run unit tests
 ## E2E Tests
 
 e2e-setup: ## Deploy test infrastructure to Kind cluster
-	skaffold run -p e2e
+	skaffold run
 
 e2e: e2e-setup ## Run e2e tests
 	bats test/e2e/proxy_sidecar.bats
 
 e2e-teardown: ## Remove test infrastructure
-	skaffold delete -p e2e
+	skaffold delete
 
 ## Help
 

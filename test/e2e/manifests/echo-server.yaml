@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: echo-server
-  namespace: kube-auth-proxy-e2e
+  namespace: kube-auth-proxy
 spec:
   replicas: 1
   selector:
@@ -47,7 +47,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: echo-server
-  namespace: kube-auth-proxy-e2e
+  namespace: kube-auth-proxy
 spec:
   selector:
     app: echo-server

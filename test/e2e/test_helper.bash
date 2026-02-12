@@ -3,7 +3,7 @@
 # Tests run on the HOST and use kubectl exec to reach in-cluster services.
 
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-cluster-a}"
-NAMESPACE="${NAMESPACE:-kube-auth-proxy-e2e}"
+NAMESPACE="${NAMESPACE:-kube-auth-proxy}"
 TEST_CLIENT="${TEST_CLIENT:-deployment/test-client}"
 TOKEN_PATH="${TOKEN_PATH:-/var/run/secrets/tokens/token}"
 
