@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server
+  namespace: kube-auth-proxy-e2e
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-server
+  template:
+    metadata:
+      labels:
+        app: echo-server
+    spec:
+      serviceAccountName: kube-auth-proxy
+      containers:
+      - name: echo
+        image: mendhak/http-https-echo:latest
+        env:
+        - name: HTTP_PORT
+          value: "8080"
+        ports:
+        - containerPort: 8080
+      - name: kube-auth-proxy
+        image: kube-auth-proxy
+        args:
+        - kube-auth-proxy
+        - --upstream=http://localhost:8080
+        - --port=4180
+        ports:
+        - containerPort: 4180
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 4180
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 4180
+          initialDelaySeconds: 3
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-server
+  namespace: kube-auth-proxy-e2e
+spec:
+  selector:
+    app: echo-server
+  ports:
+  - port: 80
+    targetPort: 4180
