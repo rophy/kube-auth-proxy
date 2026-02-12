@@ -29,7 +29,7 @@ func main() {
 		log.Fatalf("Failed to create token reviewer: %v", err)
 	}
 
-	handler, err := proxy.NewServer(cfg, reviewer, Version)
+	handler, err := proxy.NewServer(cfg, proxy.NewCachedTokenReviewer(reviewer), Version)
 	if err != nil {
 		log.Fatalf("Failed to create server: %v", err)
 	}
