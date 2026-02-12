@@ -21,20 +21,21 @@ type Config struct {
 	TokenReviewURL string
 	Upstream       string
 	Port           int
-	AuthPrefix     string
 }
 
 func ParseFlags() *Config {
 	cfg := &Config{}
 	flag.StringVar(&cfg.TokenReviewURL, "token-review-url", getEnv("TOKEN_REVIEW_URL", ""), "URL of TokenReview endpoint (default: in-cluster Kubernetes API)")
-	flag.StringVar(&cfg.Upstream, "upstream", getEnv("UPSTREAM", ""), "upstream URL for reverse proxy mode")
+	flag.StringVar(&cfg.Upstream, "upstream", getEnv("UPSTREAM", ""), "upstream URL to proxy to")
 	flag.IntVar(&cfg.Port, "port", getEnvInt("PORT", 4180), "listen port")
-	flag.StringVar(&cfg.AuthPrefix, "auth-prefix", getEnv("AUTH_PREFIX", "/auth"), "path for auth subrequest endpoint")
 	flag.Parse()
 	return cfg
 }
 
 func (c *Config) Validate() error {
+	if c.Upstream == "" {
+		return fmt.Errorf("--upstream is required")
+	}
 	return nil
 }
 

@@ -14,15 +14,12 @@ func NewServer(cfg *Config, reviewer TokenReviewer, version string) (http.Handle
 	r.Use(middleware.RequestID)
 
 	r.Get("/healthz", NewHealthHandler(version).ServeHTTP)
-	r.Get(cfg.AuthPrefix, NewAuthHandler(reviewer).ServeHTTP)
 
-	if cfg.Upstream != "" {
-		rp, err := NewReverseProxyHandler(reviewer, cfg.Upstream)
-		if err != nil {
-			return nil, err
-		}
-		r.Handle("/*", rp)
+	rp, err := NewReverseProxyHandler(reviewer, cfg.Upstream)
+	if err != nil {
+		return nil, err
 	}
+	r.Handle("/*", rp)
 
 	return r, nil
 }

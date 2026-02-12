@@ -2,17 +2,9 @@
 
 Auth proxy for Kubernetes ServiceAccount tokens, similar to [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy). Validates Bearer tokens via the TokenReview API and sets identity headers.
 
-## Modes
+## How it works
 
-**Auth subrequest mode** (`GET /auth`) — for Nginx `auth_request`, Traefik ForwardAuth, or Istio ext_authz:
-
-```
-Request → Nginx → auth_request to kube-auth-proxy /auth
-                   ↓
-              200 + X-Auth-Request-User header  OR  401
-```
-
-**Reverse proxy mode** (`--upstream`) — sits in front of your service as a sidecar:
+kube-auth-proxy sits in front of your service as a reverse proxy (typically as a sidecar):
 
 ```
 Request → kube-auth-proxy → upstream service
@@ -25,22 +17,18 @@ Request → kube-auth-proxy → upstream service
 
 | Flag | Env | Default | Description |
 |------|-----|---------|-------------|
+| `--upstream` | `UPSTREAM` | (required) | Upstream URL to proxy to |
 | `--token-review-url` | `TOKEN_REVIEW_URL` | (in-cluster API) | TokenReview endpoint URL |
-| `--upstream` | `UPSTREAM` | | Upstream URL (enables reverse proxy mode) |
 | `--port` | `PORT` | `4180` | Listen port |
-| `--auth-prefix` | `AUTH_PREFIX` | `/auth` | Auth subrequest endpoint path |
 
 ## Headers
 
-**Auth subrequest mode** (response headers):
-- `X-Auth-Request-User` — authenticated username
-- `X-Auth-Request-Groups` — comma-separated groups
-- `X-Auth-Request-Extra-Cluster-Name` — source cluster name
-
-**Reverse proxy mode** (forwarded to upstream):
+Headers forwarded to upstream on successful authentication:
 - `X-Forwarded-User` — authenticated username
 - `X-Forwarded-Groups` — comma-separated groups
 - `X-Forwarded-Extra-Cluster-Name` — source cluster name
+
+The `Authorization` header is stripped before forwarding to upstream.
 
 ## Usage
 
@@ -49,7 +37,7 @@ Request → kube-auth-proxy → upstream service
 Point `--token-review-url` at your [kube-federated-auth](https://github.com/rophy/kube-federated-auth) instance to validate tokens from multiple clusters:
 
 ```bash
-kube-auth-proxy --token-review-url=http://kube-federated-auth:8080
+kube-auth-proxy --upstream=http://localhost:8080 --token-review-url=http://kube-federated-auth:8080
 ```
 
 ### Standalone (in-cluster)
@@ -57,7 +45,7 @@ kube-auth-proxy --token-review-url=http://kube-federated-auth:8080
 When running inside a Kubernetes cluster without `--token-review-url`, kube-auth-proxy validates tokens directly against the cluster's own API server:
 
 ```bash
-kube-auth-proxy
+kube-auth-proxy --upstream=http://localhost:8080
 ```
 
 The ServiceAccount must have `system:auth-delegator` ClusterRoleBinding.

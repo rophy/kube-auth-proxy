@@ -9,6 +9,13 @@ import (
 	"strings"
 )
 
+// Request headers forwarded to upstream
+const (
+	HeaderForwardedUser         = "X-Forwarded-User"
+	HeaderForwardedGroups       = "X-Forwarded-Groups"
+	HeaderForwardedExtraCluster = "X-Forwarded-Extra-Cluster-Name"
+)
+
 type ReverseProxyHandler struct {
 	reviewer TokenReviewer
 	proxy    *httputil.ReverseProxy
@@ -56,4 +63,16 @@ func (h *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	r.Header.Del("Authorization")
 
 	h.proxy.ServeHTTP(w, r)
+}
+
+func extractBearerToken(r *http.Request) string {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return ""
+	}
+	const prefix = "Bearer "
+	if !strings.HasPrefix(auth, prefix) {
+		return ""
+	}
+	return strings.TrimPrefix(auth, prefix)
 }

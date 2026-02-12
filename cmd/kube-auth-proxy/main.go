@@ -22,11 +22,7 @@ func main() {
 	} else {
 		log.Printf("TokenReview endpoint: in-cluster Kubernetes API")
 	}
-	if cfg.Upstream != "" {
-		log.Printf("Reverse proxy mode: upstream=%s", cfg.Upstream)
-	} else {
-		log.Printf("Auth subrequest mode only")
-	}
+	log.Printf("Upstream: %s", cfg.Upstream)
 
 	reviewer, err := cfg.NewTokenReviewer()
 	if err != nil {

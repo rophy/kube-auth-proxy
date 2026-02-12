@@ -1,4 +1,4 @@
-.PHONY: build image test clean e2e-setup e2e e2e-all e2e-teardown help
+.PHONY: build image test clean e2e-setup e2e e2e-teardown help
 
 .DEFAULT_GOAL := help
 
@@ -23,11 +23,8 @@ test: ## Run unit tests
 e2e-setup: ## Deploy test infrastructure to Kind cluster
 	skaffold run -p e2e
 
-e2e: e2e-setup ## Run e2e tests (incluster + sidecar)
-	bats test/e2e/proxy_incluster.bats test/e2e/proxy_sidecar.bats
-
-e2e-all: e2e-setup ## Run all e2e tests (requires EXTERNAL_TOKEN_REVIEW_URL)
-	bats test/e2e/
+e2e: e2e-setup ## Run e2e tests
+	bats test/e2e/proxy_sidecar.bats
 
 e2e-teardown: ## Remove test infrastructure
 	skaffold delete -p e2e

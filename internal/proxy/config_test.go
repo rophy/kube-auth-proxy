@@ -2,19 +2,29 @@ package proxy
 
 import "testing"
 
-func TestConfig_Validate_NoTokenReviewURL(t *testing.T) {
+func TestConfig_Validate_RequiresUpstream(t *testing.T) {
 	cfg := &Config{
-		TokenReviewURL: "",
-		Port:           4180,
+		Port: 4180,
+	}
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error when --upstream is missing")
+	}
+}
+
+func TestConfig_Validate_WithUpstream(t *testing.T) {
+	cfg := &Config{
+		Upstream: "http://localhost:8080",
+		Port:     4180,
 	}
 	if err := cfg.Validate(); err != nil {
-		t.Errorf("expected no error when token-review-url is empty (defaults to in-cluster), got: %v", err)
+		t.Errorf("unexpected validation error: %v", err)
 	}
 }
 
 func TestConfig_Validate_WithTokenReviewURL(t *testing.T) {
 	cfg := &Config{
 		TokenReviewURL: "http://kube-federated-auth:8080",
+		Upstream:       "http://localhost:8080",
 		Port:           4180,
 	}
 	if err := cfg.Validate(); err != nil {
@@ -25,6 +35,7 @@ func TestConfig_Validate_WithTokenReviewURL(t *testing.T) {
 func TestConfig_NewTokenReviewer_WithURL(t *testing.T) {
 	cfg := &Config{
 		TokenReviewURL: "http://kube-federated-auth:8080",
+		Upstream:       "http://localhost:8080",
 	}
 	reviewer, err := cfg.NewTokenReviewer()
 	if err != nil {

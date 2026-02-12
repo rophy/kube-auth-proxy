@@ -1,11 +1,55 @@
 package proxy
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
+
+// mockReviewer implements TokenReviewer for testing.
+type mockReviewer struct {
+	result *TokenReviewResponse
+	err    error
+}
+
+func (m *mockReviewer) Review(ctx context.Context, token string) (*TokenReviewResponse, error) {
+	return m.result, m.err
+}
+
+func authenticatedReviewer(username string, groups []string, extra map[string][]string) *mockReviewer {
+	return &mockReviewer{
+		result: &TokenReviewResponse{
+			APIVersion: "authentication.k8s.io/v1",
+			Kind:       "TokenReview",
+			Status: TokenReviewStatus{
+				Authenticated: true,
+				User: UserInfo{
+					Username: username,
+					Groups:   groups,
+					Extra:    extra,
+				},
+			},
+		},
+	}
+}
+
+func unauthenticatedReviewer() *mockReviewer {
+	return &mockReviewer{
+		result: &TokenReviewResponse{
+			Status: TokenReviewStatus{
+				Authenticated: false,
+				Error:         "token not valid",
+			},
+		},
+	}
+}
+
+func errorReviewer() *mockReviewer {
+	return &mockReviewer{err: fmt.Errorf("connection refused")}
+}
 
 func TestReverseProxy_Authenticated(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
