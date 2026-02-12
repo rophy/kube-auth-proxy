@@ -1,11 +1,6 @@
-.PHONY: image test test-e2e help
+.PHONY: test test-e2e help
 
 .DEFAULT_GOAL := help
-
-## Build
-
-image: ## Build release image
-	./scripts/build-image.sh
 
 ## Test
 

@@ -64,7 +64,7 @@ rules:
 ## Docker
 
 ```bash
-docker pull rophy/kube-auth-proxy:latest
+docker pull ghcr.io/rophy/kube-auth-proxy:latest
 ```
 
 ## License
