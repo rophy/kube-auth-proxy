@@ -68,13 +68,6 @@ The ServiceAccount must have `system:auth-delegator` ClusterRoleBinding.
 docker pull rophy/kube-auth-proxy:latest
 ```
 
-## Helm
-
-```bash
-helm install kube-auth-proxy k8s/kube-auth-proxy \
-  --set tokenReviewURL=http://kube-federated-auth:8080
-```
-
 ## License
 
 MIT
