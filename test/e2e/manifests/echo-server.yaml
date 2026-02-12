@@ -25,7 +25,6 @@ spec:
       - name: kube-auth-proxy
         image: kube-auth-proxy
         args:
-        - kube-auth-proxy
         - --upstream=http://localhost:8080
         - --port=4180
         ports:

@@ -4,21 +4,16 @@ ARG VERSION=dev
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod go mod download
+COPY go.mod ./
 
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 go build -ldflags "-X main.Version=${VERSION}" -o /kube-auth-proxy ./cmd/kube-auth-proxy
 
-FROM alpine:3.20
-
-RUN apk --no-cache add ca-certificates tini
+FROM gcr.io/distroless/static
 
 COPY --from=builder /kube-auth-proxy /usr/local/bin/kube-auth-proxy
 
 EXPOSE 4180
 
-ENTRYPOINT ["/sbin/tini", "--"]
-
-CMD ["kube-auth-proxy"]
+ENTRYPOINT ["/usr/local/bin/kube-auth-proxy"]
