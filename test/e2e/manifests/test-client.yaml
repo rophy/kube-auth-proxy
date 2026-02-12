@@ -29,14 +29,3 @@ spec:
             command: ["test", "-f", "/usr/bin/curl"]
           initialDelaySeconds: 3
           periodSeconds: 2
-        volumeMounts:
-        - name: projected-token
-          mountPath: /var/run/secrets/tokens
-          readOnly: true
-      volumes:
-      - name: projected-token
-        projected:
-          sources:
-          - serviceAccountToken:
-              path: token
-              expirationSeconds: 3600

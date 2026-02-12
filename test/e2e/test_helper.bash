@@ -2,14 +2,13 @@
 # Common test helpers for kube-auth-proxy e2e tests.
 # Tests run on the HOST and use kubectl exec to reach in-cluster services.
 
-KUBE_CONTEXT="${KUBE_CONTEXT:-kind-cluster-a}"
 NAMESPACE="${NAMESPACE:-kube-auth-proxy}"
 TEST_CLIENT="${TEST_CLIENT:-deployment/test-client}"
-TOKEN_PATH="${TOKEN_PATH:-/var/run/secrets/tokens/token}"
+TOKEN_PATH="${TOKEN_PATH:-/var/run/secrets/kubernetes.io/serviceaccount/token}"
 
 # Run a command in the test-client pod
 kexec() {
-    kubectl --context "$KUBE_CONTEXT" exec -n "$NAMESPACE" "$TEST_CLIENT" -- "$@"
+    kubectl exec -n "$NAMESPACE" "$TEST_CLIENT" -- "$@"
 }
 
 # Read the projected ServiceAccount token from the test-client pod
