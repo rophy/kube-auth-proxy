@@ -30,6 +30,14 @@ Headers forwarded to upstream on successful authentication:
 
 The `Authorization` header is stripped before forwarding to upstream.
 
+Example of headers received by the upstream service:
+
+```
+X-Forwarded-User: system:serviceaccount:my-namespace:my-sa
+X-Forwarded-Groups: system:serviceaccounts,system:serviceaccounts:my-namespace,system:authenticated
+X-Forwarded-Extra-Cluster-Name: cluster-01
+```
+
 ## Usage
 
 ### With kube-federated-auth
