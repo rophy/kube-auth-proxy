@@ -24,9 +24,11 @@ spec:
         - containerPort: 8080
       - name: kube-auth-proxy
         image: kube-auth-proxy
-        args:
-        - --upstream=http://localhost:8080
-        - --port=4180
+        env:
+        - name: UPSTREAM
+          value: "http://localhost:8080"
+        - name: PORT
+          value: "4180"
         ports:
         - containerPort: 4180
         livenessProbe:

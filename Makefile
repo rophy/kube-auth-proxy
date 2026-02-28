@@ -11,7 +11,7 @@ test: ## Run unit tests
 
 test-e2e: ## Run e2e tests
 	skaffold run
-	bats test/e2e/proxy_sidecar.bats
+	bats test/e2e/*.bats
 
 ## Help
 

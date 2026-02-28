@@ -30,3 +30,23 @@ wait_for_service() {
     echo "ERROR: service not ready at $url" >&2
     return 1
 }
+
+# Wait for a deployment rollout to complete
+wait_for_rollout() {
+    local deploy="${1:-echo-server}"
+    kubectl rollout status "deployment/${deploy}" -n "$NAMESPACE" --timeout=60s
+}
+
+# Set an env var on the kube-auth-proxy container and wait for rollout
+patch_proxy_env() {
+    local key="$1" value="$2"
+    kubectl set env -n "$NAMESPACE" deployment/echo-server -c kube-auth-proxy "${key}=${value}"
+    wait_for_rollout
+}
+
+# Remove an env var from the kube-auth-proxy container and wait for rollout
+unpatch_proxy_env() {
+    local key="$1"
+    kubectl set env -n "$NAMESPACE" deployment/echo-server -c kube-auth-proxy "${key}-"
+    wait_for_rollout
+}
