@@ -135,3 +135,33 @@ func TestHTTPTokenReviewer_ServerError(t *testing.T) {
 		t.Fatal("expected error for server error response")
 	}
 }
+
+func TestHTTPTokenReviewer_Forbidden(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"kind":       "Status",
+			"apiVersion": "v1",
+			"status":     "Failure",
+			"message":    "tokenreviews.authentication.k8s.io is forbidden",
+			"reason":     "Forbidden",
+			"code":       403,
+		})
+	}))
+	defer server.Close()
+
+	reviewer := &HTTPTokenReviewer{
+		url:    server.URL,
+		client: server.Client(),
+	}
+
+	_, err := reviewer.Review(context.Background(), "some-token")
+	if err == nil {
+		t.Fatal("expected error for 403 response")
+	}
+	want := "tokenreviews.authentication.k8s.io is forbidden"
+	if err.Error() != want {
+		t.Errorf("error = %q, want %q", err.Error(), want)
+	}
+}

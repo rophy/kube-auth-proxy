@@ -75,7 +75,7 @@ func (h *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	result, err := h.reviewer.Review(r.Context(), token)
 	if err != nil {
 		slog.Error("token review failed", "err", err)
-		rw.WriteHeader(http.StatusUnauthorized)
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

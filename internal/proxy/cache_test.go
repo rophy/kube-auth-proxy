@@ -64,7 +64,7 @@ func TestCachedTokenReviewer_UnauthenticatedNotCached(t *testing.T) {
 }
 
 func TestCachedTokenReviewer_ErrorNotCached(t *testing.T) {
-	inner := &countingReviewer{inner: errorReviewer()}
+	inner := &countingReviewer{inner: errorReviewer("connection refused")}
 	cached := NewCachedTokenReviewer(inner)
 
 	ctx := context.Background()

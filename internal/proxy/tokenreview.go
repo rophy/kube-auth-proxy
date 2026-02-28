@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 )
 
@@ -80,7 +82,18 @@ func (r *HTTPTokenReviewer) Review(ctx context.Context, token string) (*TokenRev
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+		var status struct {
+			Message string `json:"message"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&status); err == nil && status.Message != "" {
+			return nil, fmt.Errorf("%s", status.Message)
+		}
+		return nil, fmt.Errorf("token review returned status %d", resp.StatusCode)
+	}
+	if resp.StatusCode >= 500 {
+		body, _ := io.ReadAll(resp.Body)
+		slog.Error("token review API error", "status", resp.StatusCode, "body", string(body))
 		return nil, fmt.Errorf("token review returned status %d", resp.StatusCode)
 	}
 

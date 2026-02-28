@@ -47,8 +47,8 @@ func unauthenticatedReviewer() *mockReviewer {
 	}
 }
 
-func errorReviewer() *mockReviewer {
-	return &mockReviewer{err: fmt.Errorf("connection refused")}
+func errorReviewer(msg string) *mockReviewer {
+	return &mockReviewer{err: fmt.Errorf("%s", msg)}
 }
 
 func TestReverseProxy_Authenticated(t *testing.T) {
@@ -125,5 +125,43 @@ func TestReverseProxy_Unauthenticated(t *testing.T) {
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestReverseProxy_ReviewAPIError(t *testing.T) {
+	reviewer := errorReviewer("tokenreviews.authentication.k8s.io is forbidden")
+
+	handler, err := NewReverseProxyHandler(reviewer, "http://localhost:9999")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/data", nil)
+	req.Header.Set("Authorization", "Bearer some-token")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusInternalServerError)
+	}
+}
+
+func TestReverseProxy_ReviewNetworkError(t *testing.T) {
+	reviewer := errorReviewer("dial tcp 10.96.0.1:443: connect: connection refused")
+
+	handler, err := NewReverseProxyHandler(reviewer, "http://localhost:9999")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/data", nil)
+	req.Header.Set("Authorization", "Bearer some-token")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusInternalServerError)
 	}
 }
