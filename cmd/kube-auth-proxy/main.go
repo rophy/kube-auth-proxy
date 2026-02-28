@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/rophy/kube-auth-proxy/internal/proxy"
 )
@@ -11,32 +13,59 @@ import (
 var Version = "dev"
 
 func main() {
+	initLogging()
+
 	cfg := proxy.ParseFlags()
 	if err := cfg.Validate(); err != nil {
-		log.Fatalf("Configuration error: %v", err)
+		slog.Error("configuration error", "err", err)
+		os.Exit(1)
 	}
 
-	log.Printf("kube-auth-proxy version %s", Version)
+	tokenReview := "in-cluster"
 	if cfg.TokenReviewURL != "" {
-		log.Printf("TokenReview endpoint: %s", cfg.TokenReviewURL)
-	} else {
-		log.Printf("TokenReview endpoint: in-cluster Kubernetes API")
+		tokenReview = cfg.TokenReviewURL
 	}
-	log.Printf("Upstream: %s", cfg.Upstream)
+	slog.Info("starting", "version", Version)
+	slog.Info("config", "upstream", cfg.Upstream, "port", cfg.Port, "token_review", tokenReview)
 
 	reviewer, err := cfg.NewTokenReviewer()
 	if err != nil {
-		log.Fatalf("Failed to create token reviewer: %v", err)
+		slog.Error("failed to create token reviewer", "err", err)
+		os.Exit(1)
 	}
 
 	handler, err := proxy.NewServer(cfg, proxy.NewCachedTokenReviewer(reviewer), Version)
 	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
+		slog.Error("failed to create server", "err", err)
+		os.Exit(1)
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
-	log.Printf("Starting server on %s", addr)
+	slog.Info("listening", "addr", addr)
 	if err := http.ListenAndServe(addr, handler); err != nil {
-		log.Fatalf("Server failed: %v", err)
+		slog.Error("server failed", "err", err)
+		os.Exit(1)
 	}
+}
+
+func initLogging() {
+	level, err := parseLogLevel(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		slog.Error("invalid LOG_LEVEL", "value", os.Getenv("LOG_LEVEL"), "err", err)
+		os.Exit(1)
+	}
+	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: level,
+	})
+	slog.SetDefault(slog.New(handler))
+}
+
+func parseLogLevel(s string) (slog.Leveler, error) {
+	var level slog.LevelVar
+	if s != "" {
+		if err := level.UnmarshalText([]byte(strings.ToUpper(s))); err != nil {
+			return nil, err
+		}
+	}
+	return &level, nil
 }

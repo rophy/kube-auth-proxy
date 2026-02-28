@@ -2,11 +2,12 @@ package proxy
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // Request headers forwarded to upstream
@@ -33,25 +34,57 @@ func NewReverseProxyHandler(reviewer TokenReviewer, upstreamURL string) (*Revers
 	}, nil
 }
 
+type responseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (rw *responseWriter) Flush() {
+	if f, ok := rw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 func (h *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	rw := &responseWriter{ResponseWriter: w, status: http.StatusOK}
+	var user string
+
+	defer func() {
+		slog.Info("request",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", rw.status,
+			"user", user,
+			"duration", time.Since(start),
+			"remote", r.RemoteAddr,
+		)
+	}()
+
 	token := extractBearerToken(r)
 	if token == "" {
-		w.WriteHeader(http.StatusUnauthorized)
+		rw.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	result, err := h.reviewer.Review(r.Context(), token)
 	if err != nil {
-		log.Printf("TokenReview error: %v", err)
-		w.WriteHeader(http.StatusUnauthorized)
+		slog.Error("token review failed", "err", err)
+		rw.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	if !result.Status.Authenticated {
-		w.WriteHeader(http.StatusUnauthorized)
+		rw.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
+	user = result.Status.User.Username
 	r.Header.Set(HeaderForwardedUser, result.Status.User.Username)
 	if len(result.Status.User.Groups) > 0 {
 		r.Header.Set(HeaderForwardedGroups, strings.Join(result.Status.User.Groups, ","))
@@ -62,7 +95,7 @@ func (h *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	r.Header.Del("Authorization")
 
-	h.proxy.ServeHTTP(w, r)
+	h.proxy.ServeHTTP(rw, r)
 }
 
 func extractBearerToken(r *http.Request) string {
