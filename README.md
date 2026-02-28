@@ -69,6 +69,23 @@ rules:
   verbs: ["create"]
 ```
 
+## Development
+
+**Requirements:** Go 1.24+, Docker, [kind](https://kind.sigs.k8s.io/), [skaffold](https://skaffold.dev/), [bats](https://github.com/bats-core/bats-core), jq
+
+**Unit tests:**
+
+```bash
+make test
+```
+
+**E2E tests** (requires a running kind cluster):
+
+```bash
+kind create cluster
+make test-e2e
+```
+
 ## Docker
 
 ```bash
